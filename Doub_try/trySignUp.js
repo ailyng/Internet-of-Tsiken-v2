@@ -1,6 +1,9 @@
 import React, { useState, useRef } from "react";
+// --- 1. ADD FIRESTORE IMPORTS ---
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import {auth} from '../Doub_try/firebaseconfig'; 
+import { doc, setDoc } from "firebase/firestore"; // <-- ADD THIS
+import { auth, db } from '../Doub_try/firebaseconfig'; // <-- ADD 'db' HERE
+
 import {
   View,
   Text,
@@ -21,6 +24,7 @@ export default function TryScreen() {
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  // ... (rest of your states are perfect)
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +32,7 @@ export default function TryScreen() {
   const [passwordError, setPasswordError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-
+  // ... (shakeAnim and triggerShake are perfect)
   const shakeAnim = {
     fullname: useRef(new Animated.Value(0)).current,
     email: useRef(new Animated.Value(0)).current,
@@ -49,7 +53,9 @@ export default function TryScreen() {
     ]).start();
   };
 
+
   const handleSignUp = async () => {
+    // ... (Your validation logic is perfect)
     setErrors({});
     setPasswordError(false);
 
@@ -60,14 +66,12 @@ export default function TryScreen() {
     if (!password) newErrors.password = true;
     if (!confirmPassword) newErrors.confirmPassword = true;
 
-    // Set all empty-field errors first
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       Object.keys(newErrors).forEach(field => triggerShake(field));
       return; 
     }
 
-    // 2. --- CHECK PASSWORD MISMATCH ---
     if (password !== confirmPassword) {
       setPasswordError(true);
       triggerShake("password");
@@ -75,22 +79,32 @@ export default function TryScreen() {
       return; 
     }
 
-    // 3. --- ATTEMPT FIREBASE SIGN UP ---
-    setLoading(true); // Show a loading spinner
+    setLoading(true);
     try {
+      // Step 1: Create user in AUTHENTICATION
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      console.log("✅ Auth user created:", user.uid);
+
+      // --- 2. ADD THIS BLOCK TO SAVE TO FIRESTORE ---
+      // Step 2: Save profile data in FIRESTORE
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        fullname: fullname,
+        phone: phone,
+        email: email,
+        createdAt: new Date(),
+      });
+      console.log("✅ User profile saved to Firestore!");
+      // --- END OF NEW BLOCK ---
+
       // SUCCESS!
-      console.log("✅ Sign Up Successful!");
-      console.log("New user UID:", user.uid);
-      console.log("New user email:", user.email);
-
       Alert.alert("Success", "Account created successfully!");
-
+      // navigation.navigate("Home"); // You can add navigation here
 
     } catch (error) {
-      // Handle errors from Firebase
+      // ... (Your error handling is perfect)
       console.error("Firebase Sign Up Error:", error.code, error.message);
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
@@ -105,8 +119,6 @@ export default function TryScreen() {
         errorMessage = "The email address is not valid.";
         setErrors(prev => ({ ...prev, email: true }));
         triggerShake('email');
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = "Email/Password sign-up is not enabled. Please enable it in Firebase Console.";
       }
       Alert.alert("Sign Up Failed", errorMessage);
     } finally {
@@ -114,6 +126,7 @@ export default function TryScreen() {
     }
   };
 
+  // ... (The rest of your code (renderInput and styles) is perfect)
   const renderInput = (placeholder, value, setValue, field, isPassword = false) => (
     <Animated.View
       style={[
