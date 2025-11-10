@@ -148,6 +148,7 @@ export default function TryScreen() {
         }}
         autoCapitalize={field === "email" ? "none" : "sentences"}
         keyboardType={field === "email" ? "email-address" : field === "phone" ? "phone-pad" : "default"}
+        maxLength={field === "phone" ? 11 : undefined}
       />
       {isPassword && (
         <TouchableOpacity
