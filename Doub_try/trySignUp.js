@@ -19,7 +19,11 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-export default function TryScreen() { 
+// --- 1. IMPORT NAVIGATION ---
+import { useNavigation } from "@react-navigation/native";
+
+// The function name now matches your import in App.js
+export default function SignUp() { 
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -30,6 +34,9 @@ export default function TryScreen() {
   const [errors, setErrors] = useState({});
   const [passwordError, setPasswordError] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // --- 2. INITIALIZE NAVIGATION ---
+  const navigation = useNavigation();
 
   // ... (shakeAnim and triggerShake are perfect)
   const shakeAnim = {
@@ -100,7 +107,9 @@ export default function TryScreen() {
 
       // SUCCESS!
       Alert.alert("Success", "Account created successfully!");
-      // navigation.navigate("Home"); // You can add navigation here
+      
+      // --- 3. NAVIGATE TO LOGIN SCREEN ---
+      navigation.navigate("LogIn"); 
 
     } catch (error) {
       // ... (Your error handling is perfect)
@@ -123,6 +132,11 @@ export default function TryScreen() {
     } finally {
       setLoading(false); 
     }
+  };
+
+  // --- ADDED THIS FUNCTION ---
+  const handleGoToLogin = () => {
+    navigation.navigate("LogIn");
   };
 
   // ... (The rest of your code (renderInput and styles) is perfect)
@@ -201,6 +215,16 @@ export default function TryScreen() {
                 <Text style={styles.buttonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
+
+            {/* --- ADDED THIS BLOCK --- */}
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity onPress={handleGoToLogin}>
+                <Text style={styles.loginLink}>Log In</Text>
+              </TouchableOpacity>
+            </View>
+            {/* --- END OF ADDED BLOCK --- */}
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -295,5 +319,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 14,
     textAlign: "center",
+  },
+  // --- ADDED THESE STYLES ---
+  loginRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15, // Added some space
+  },
+  loginText: {
+    color: "#555",
+    fontSize: 14, // Matched font size
+  },
+  loginLink: {
+    color: "#2D2A8C", // Matched your button color
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    fontSize: 14, // Matched font size
   },
 });
