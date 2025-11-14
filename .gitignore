@@ -1,12 +1,35 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# Firebase configuration (contains sensitive API keys)
+Doub_try/firebaseconfig.js
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # dependencies
 node_modules/
 
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # Expo
 .expo/
-dist/
-web-build/
+.expo-shared/
 expo-env.d.ts
 
 # Native
@@ -25,13 +48,6 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
 
 # typescript
 *.tsbuildinfo

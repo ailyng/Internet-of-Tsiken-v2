@@ -19,9 +19,10 @@ import Checkbox from "expo-checkbox";
 // Import navigation hook
 import { useNavigation } from "@react-navigation/native";
 
-// Import Firebase auth
+// Import Firebase auth and Firestore
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../Doub_try/firebaseconfig'; // Make sure this path is correct
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../Doub_try/firebaseconfig'; // Make sure this path is correct
 
 const Logo = require("../assets/logo.png"); // Make sure this path is correct
 
@@ -44,13 +45,23 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // Sign in with Firebase
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log("✅ Login successful!");
+      // Sign in with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("✅ Login successful! User ID:", user.uid);
 
-      Alert.alert("Success", "Logged in!"); // Placeholder alert
-      // You can navigate to your main app screen here
-      // navigation.navigate("Home");
+      // Fetch user data from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log("✅ User data loaded:", userData);
+        // You can store userData in global state (Context/Redux) if needed
+      } else {
+        console.log("⚠️ No user profile found in Firestore");
+      }
+
+      // Navigate to VerifyIdentity for OTP verification
+      navigation.navigate("VerifyIdentity");
 
     } catch (error) {
       console.error("Firebase Login Error:", error.code, error.message);
@@ -75,8 +86,7 @@ export default function Login() {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert("Forgot Password", "This feature is not set up yet.");
-    // navigation.navigate("ResetPassword");
+    navigation.navigate("ResetPassword");
   };
 
   return (
