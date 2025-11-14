@@ -190,7 +190,7 @@ export default function SignUp() {
         >
           <View style={styles.modal}>
             <Image
-              source={require("../assets/icon.png")}
+              source={require("../assets/logo.png")}
               style={styles.logo}
             />
             <Text style={styles.title}>Create Account</Text>
@@ -256,10 +256,11 @@ const styles = StyleSheet.create({
     elevation: 15,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     resizeMode: "contain",
-    marginBottom: 15,
+    marginBottom: 10,
+    borderRadius: 60,
   },
   title: {
     fontSize: 22,
