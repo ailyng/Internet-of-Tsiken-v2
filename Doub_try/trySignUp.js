@@ -259,8 +259,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     resizeMode: "contain",
-    marginBottom: 10,
-    borderRadius: 60,
+    marginBottom: 15,
   },
   title: {
     fontSize: 22,
