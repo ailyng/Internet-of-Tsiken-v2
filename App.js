@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Components are imported with the correct path and names
 import JsonSplashScreen from "./JsonSplashScreen/JsonSplashScreen";
-import Login from "./screens/Login";
+import Login from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import LoginSuccess from "./screens/loginSuccess";
 import VerifyIdentity from "./screens/verifyIdentity";
@@ -23,7 +23,7 @@ export default function App() {
       >
         <Stack.Screen name="JsonSplash" component={JsonSplashScreen} />
         {/* Screen names must match the navigation calls in the components (e.g., handleSignup in tryLogIn.js navigates to "Signup") */}
-        <Stack.Screen name="LogIn" component={LogIn} />
+        <Stack.Screen name="LogIn" component={Login} />
         <Stack.Screen name="Signup" component={SignUp} />
         <Stack.Screen name="LoginSuccess" component={LoginSuccess} />
         <Stack.Screen name="VerifyIdentity" component={VerifyIdentity} />
