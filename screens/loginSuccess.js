@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseconfig';
@@ -33,9 +34,13 @@ export default function LoginSuccess() {
     loadUserData();
 
     const timer = setTimeout(() => {
-      console.log('Dashboard loaded!');
-      // TODO: Navigate to your main app screen when ready
-      // navigation.replace("Home");
+      console.log('Dashboard loaded! Navigating to Home...');
+      try {
+        navigation.replace("Home");
+        console.log('Navigation to Home executed');
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -52,6 +57,17 @@ export default function LoginSuccess() {
         <Text style={styles.subtitle}>Welcome to Internet of Tsiken</Text>
         <Text style={styles.loading}>Loading your dashboard...</Text>
         <ActivityIndicator size="large" color="#4CAF50" style={styles.spinner} />
+        
+        {/* Debug button - remove after testing */}
+        <TouchableOpacity 
+          style={styles.debugButton}
+          onPress={() => {
+            console.log('Manual navigation to Home');
+            navigation.replace("Home");
+          }}
+        >
+          <Text style={styles.debugButtonText}>Go to Home (Debug)</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -105,5 +121,16 @@ const styles = StyleSheet.create({
   },
   spinner: {
     marginTop: 10,
+  },
+  debugButton: {
+    marginTop: 20,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
