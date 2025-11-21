@@ -11,7 +11,7 @@ import {
   verifyPasswordResetCode,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebaseconfig";
+import { auth, db } from "../../config/firebaseconfig";
 
 /**
  * Sign up a new user
