@@ -53,11 +53,7 @@ export const requestOTP = async (phoneNumber) => {
     const otpData = await AsyncStorage.getItem(OTP_STORAGE_KEY);
 
     if (otpData) {
-      const {
-        phoneNumber: storedPhone,
-        createdAt,
-        lastResendAt,
-      } = JSON.parse(otpData);
+      const { phoneNumber: storedPhone, lastResendAt } = JSON.parse(otpData);
 
       // Check if requesting for the same phone number
       if (storedPhone === phoneNumber) {
