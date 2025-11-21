@@ -146,7 +146,10 @@ export default function Login() {
         const userPhone = userData.phone;
 
         if (!userPhone) {
-          Alert.alert("Error", "Phone number not found in your account. Please contact support.");
+          Alert.alert(
+            "Error",
+            "Phone number not found in your account. Please contact support."
+          );
           setLoading(false);
           return;
         }
@@ -389,7 +392,7 @@ export default function Login() {
               </View>
             )}
 
-            {/* Options Row */
+            {/* Options Row */}
             <View style={styles.optionsRow}>
               <View style={styles.checkboxContainer}>
                 <Checkbox
