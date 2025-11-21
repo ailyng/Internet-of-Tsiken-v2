@@ -129,24 +129,7 @@ export default function ResetPasswordScreen() {
                   We've sent password reset instructions to:
                 </Text>
                 <Text style={styles.emailDisplay}>{email}</Text>
-                <Text style={styles.successMessage}>
-                  ⚠️ IMPORTANT: The email link may not work in React Native
-                  apps.
-                  {"\n\n"}
-                  Instead, please:
-                  {"\n"}
-                  1. Open your email on a web browser
-                  {"\n"}
-                  2. Click the reset link
-                  {"\n"}
-                  3. You'll be redirected to Firebase's password reset page
-                  {"\n"}
-                  4. Enter your new password there
-                  {"\n\n"}
-                  📧 Check spam/junk folder if you don't see the email.
-                  {"\n\n"}
-                  Or contact support for assistance.
-                </Text>
+
                 <TouchableOpacity
                   style={styles.loginBtn}
                   onPress={() => {
