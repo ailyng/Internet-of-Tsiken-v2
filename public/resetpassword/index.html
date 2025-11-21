@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reset Password</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      color: #3b4cca;
+    }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #3b4cca;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    a:hover {
+      background: #2a3799;
+    }
+  </style>
+  <script>
+    // Extract query params (oobCode, lang, etc.)
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    (function() {
+      const oobCode = getQueryParam("oobCode");
+      const lang = getQueryParam("lang") || "en";
+
+      // Build deep link into your app
+      const appUrl = `internet-of-tsiken://resetpassword?oobCode=${encodeURIComponent(oobCode || "")}&lang=${encodeURIComponent(lang)}`;
+
+      // Try to open the app immediately
+      window.location.replace(appUrl);
+
+      // Fallback: show manual link if app doesn't open
+      setTimeout(() => {
+        const fallback = document.getElementById("fallback");
+        fallback.href = appUrl;
+        document.getElementById("hint").style.display = "block";
+      }, 1000);
+    })();
+  </script>
+</head>
+<body>
+  <h1>Redirecting to Internet‑of‑Tsiken App…</h1>
+  <p>If the app doesn’t open automatically, tap the button below:</p>
+  <p id="hint" style="display:none;">
+    <a id="fallback">Open App</a>
+  </p>
+</body>
+</html>

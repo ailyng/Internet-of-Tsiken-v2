@@ -5,84 +5,55 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth, db } from "../config/firebaseconfig";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { auth } from "../config/firebaseconfig";
 
-export default function ResetPassword() {
+const Logo = require("../assets/logo.png");
+
+export default function resetpassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-
-  // ✅ Validation 1: Email format check
-  const isValidEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
 
   const handleResetPassword = async () => {
     if (!email) {
       Alert.alert("Error", "Please enter your email address.");
       return;
     }
-
-    if (!isValidEmail(email.trim())) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       Alert.alert("Error", "Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
     try {
-      // ✅ Validation 2: Check if email exists in Firestore
-      const q = query(
-        collection(db, "users"),
-        where("email", "==", email.trim())
-      );
-      const querySnapshot = await getDocs(q);
+      // ✅ Add actionCodeSettings here
+      const actionCodeSettings = {
+        url: "https://internet-of-tsiken-690dd.web.app/resetpassword", // your Hosting domain
+        handleCodeInApp: true,
+      };
 
-      if (querySnapshot.empty) {
-        Alert.alert("Error", "No account found with this email address.");
-        setLoading(false);
-        return;
-      }
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
 
-      // ✅ Only send reset email if user exists
-      await sendPasswordResetEmail(auth, email.trim());
-
-      // Mark flag so PasswordUpdated screen shows once
-      querySnapshot.forEach(async (docSnap) => {
-        await updateDoc(doc(db, "users", docSnap.id), {
-          mustShowPasswordUpdated: true,
-        });
-      });
-
-      Alert.alert(
-        "Success",
-        `Password reset email sent to ${email.trim()}. Please check your inbox.`,
-        [{ text: "OK", onPress: () => navigation.navigate("LogIn") }]
-      );
+      Alert.alert("Success", "Password reset email sent!", [
+        { text: "OK", onPress: () => navigation.navigate("LogIn") },
+      ]);
     } catch (error) {
       let errorMessage = "Failed to send reset email.";
-      if (error.code === "auth/invalid-email") {
-        errorMessage = "The email address is not valid.";
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email.";
       }
-      Alert.alert("Reset Failed", errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -96,15 +67,11 @@ export default function ResetPassword() {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.card}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={60}
-              color="#3b4cca"
-              style={styles.icon}
-            />
+            <Image source={Logo} style={styles.logo} />
             <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>
-              Enter your email to receive reset instructions.
+              Enter your email and we’ll send you instructions to reset your
+              password.
             </Text>
 
             <Text style={styles.label}>Email Address</Text>
@@ -118,7 +85,7 @@ export default function ResetPassword() {
             />
 
             <TouchableOpacity
-              style={[styles.resetBtn, loading && { opacity: 0.7 }]}
+              style={styles.resetBtn}
               onPress={handleResetPassword}
               disabled={loading}
             >
@@ -129,11 +96,7 @@ export default function ResetPassword() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={18} color="#3b4cca" />
+            <TouchableOpacity onPress={() => navigation.navigate("LogIn")}>
               <Text style={styles.backText}>Back to Login</Text>
             </TouchableOpacity>
           </View>
@@ -155,14 +118,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 25,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
     elevation: 4,
     alignItems: "center",
   },
-  icon: { marginBottom: 20 },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: "contain",
+    marginBottom: 10,
+    borderRadius: 60,
+  },
   title: { fontSize: 22, fontWeight: "bold", color: "#000", marginBottom: 10 },
   subtitle: {
     fontSize: 14,
@@ -195,11 +160,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   resetText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  backBtn: { flexDirection: "row", alignItems: "center", padding: 10 },
   backText: {
     color: "#3b4cca",
     fontSize: 16,
-    marginLeft: 5,
     fontWeight: "500",
+    marginTop: 10,
   },
 });

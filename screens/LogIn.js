@@ -20,9 +20,9 @@ import Checkbox from "expo-checkbox";
 import { useNavigation } from "@react-navigation/native";
 
 // Import Firebase auth and Firestore
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebaseconfig'; // Make sure this path is correct
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../config/firebaseconfig"; // Make sure this path is correct
 
 const Logo = require("../assets/logo.png"); // Make sure this path is correct
 
@@ -46,7 +46,11 @@ export default function Login() {
     setLoading(true);
     try {
       // Sign in with Firebase Authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
       console.log("✅ Login successful! User ID:", user.uid);
 
@@ -62,15 +66,14 @@ export default function Login() {
 
       // Navigate to VerifyIdentity for OTP verification
       navigation.navigate("VerifyIdentity");
-
     } catch (error) {
       console.error("Firebase Login Error:", error.code, error.message);
       let errorMessage = "Invalid email or password.";
-      if (error.code === 'auth/invalid-credential') {
+      if (error.code === "auth/invalid-credential") {
         errorMessage = "Invalid email or password.";
-      } else if (error.code === 'auth/invalid-email') {
+      } else if (error.code === "auth/invalid-email") {
         errorMessage = "That email address is not valid.";
-      } else if (error.code === 'auth/too-many-requests') {
+      } else if (error.code === "auth/too-many-requests") {
         errorMessage = "Too many login attempts. Please try again later.";
       }
       Alert.alert("Login Failed", errorMessage);
@@ -82,11 +85,11 @@ export default function Login() {
   const handleSignup = () => {
     // --- THIS IS THE FIX ---
     // It now matches the "Signup" name in your App.js
-    navigation.navigate("Signup"); 
+    navigation.navigate("SignUp");
   };
 
   const handleForgotPassword = () => {
-    navigation.navigate("ResetPassword");
+    navigation.navigate("resetpassword");
   };
 
   return (

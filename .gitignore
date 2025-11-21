@@ -52,3 +52,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase config (local only)
+config/firebaseconfig.js

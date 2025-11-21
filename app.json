@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Internet Of Tsiken",
-    "slug": "Capstone",
+    "slug": "capstone",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -20,7 +20,8 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.ailynmay.capstone"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,8 +31,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "0fa4a57e-a0d6-44ce-925c-9eeb568812a8"
+        "projectId": "84f969ee-7b4d-47d6-8494-5d9a87e161fb"
       }
-    }
+    },
+    "scheme": "internet-of-tsiken",
+    "owner": "ailynmay"
   }
 }
