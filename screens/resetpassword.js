@@ -63,7 +63,10 @@ export default function ResetPasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+        >
           <View style={styles.card}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
@@ -146,8 +149,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  scrollContent: {
     alignItems: "center",
     justifyContent: "center",
+    flexGrow: 1,
   },
   card: {
     width: "85%",
