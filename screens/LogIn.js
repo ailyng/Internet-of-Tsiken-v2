@@ -27,7 +27,7 @@ import {
   resetLoginAttempts,
   formatLockoutTime,
 } from "../utils/deviceLockout";
-import { requestOTP, checkOTPResendStatus } from "../services/otpService";
+import { requestOTP, checkOTPResendStatus } from "../src/services/otpService";
 
 const Logo = require("../assets/logo.png");
 
