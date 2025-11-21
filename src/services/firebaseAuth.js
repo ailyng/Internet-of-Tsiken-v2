@@ -163,14 +163,20 @@ export const confirmPasswordResetWithCode = async (code, newPassword) => {
     return { success: true, error: null };
   } catch (error) {
     console.error("Confirm password reset error:", error);
-    let errorMessage = "Failed to reset password";
+    let errorMessage = "Failed to reset password. Please try again.";
 
     if (error.code === "auth/invalid-action-code") {
-      errorMessage = "Password reset link is invalid";
+      errorMessage = "This password reset link is invalid or has already been used. Please request a new password reset email.";
     } else if (error.code === "auth/expired-action-code") {
-      errorMessage = "Password reset link has expired";
+      errorMessage = "This password reset link has expired. Password reset links are valid for 1 hour. Please request a new one.";
     } else if (error.code === "auth/weak-password") {
-      errorMessage = "Password is too weak";
+      errorMessage = "Password is too weak. Please use a stronger password with at least 8 characters.";
+    } else if (error.code === "auth/user-disabled") {
+      errorMessage = "This user account has been disabled. Please contact support.";
+    } else if (error.code === "auth/user-not-found") {
+      errorMessage = "User account not found. The account may have been deleted.";
+    } else if (error.code === "auth/missing-password") {
+      errorMessage = "Please enter a new password.";
     }
 
     return { success: false, error: errorMessage };
