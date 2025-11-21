@@ -20,7 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebaseconfig";
-import { validateEmail, validatePassword } from "../utils/authValidation";
+import { validateEmail } from "../src/utils/authValidation";
 import {
   checkLoginLockout,
   incrementLoginAttempts,
@@ -102,9 +102,9 @@ export default function Login() {
       newErrors.email = emailValidation.error;
     }
 
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      newErrors.password = passwordValidation.errors;
+    // For login, just check if password is provided
+    if (!password || password.trim() === "") {
+      newErrors.password = "Password is required";
     }
 
     setErrors(newErrors);
