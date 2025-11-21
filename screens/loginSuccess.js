@@ -1,47 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { auth, db } from '../config/firebaseconfig';
-import { doc, getDoc } from 'firebase/firestore';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
-export default function LoginSuccess() {
+export default function LoginSuccessScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            console.log("✅ User dashboard data loaded:", userData);
-            // Store in global state if needed
-          }
-        }
-      } catch (error) {
-        console.error("Error loading user data:", error);
-      }
-    };
-
-    loadUserData();
-
     const timer = setTimeout(() => {
-      console.log('Dashboard loaded! Navigating to Home...');
-      try {
-        navigation.replace("Home");
-        console.log('Navigation to Home executed');
-      } catch (error) {
-        console.error('Navigation error:', error);
-      }
-    }, 3000);
+      navigation.replace("Home");
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [navigation]);
@@ -49,24 +23,20 @@ export default function LoginSuccess() {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image
-          source={{ uri: 'https://img.icons8.com/color/96/checked--v1.png' }}
-          style={styles.icon}
-        />
+        <Ionicons name="checkmark-circle" size={80} color="#2e7d32" />
+
         <Text style={styles.title}>Login Successful!</Text>
-        <Text style={styles.subtitle}>Welcome to Internet of Tsiken</Text>
-        <Text style={styles.loading}>Loading your dashboard...</Text>
-        <ActivityIndicator size="large" color="#4CAF50" style={styles.spinner} />
-        
-        {/* Debug button - remove after testing */}
-        <TouchableOpacity 
-          style={styles.debugButton}
-          onPress={() => {
-            console.log('Manual navigation to Home');
-            navigation.replace("Home");
-          }}
+        <Text style={styles.subtitle}>Welcome back to Internet of Tsiken</Text>
+
+        <ActivityIndicator size="large" color="#3b4cca" style={styles.loader} />
+
+        <Text style={styles.redirectText}>Redirecting to dashboard...</Text>
+
+        <TouchableOpacity
+          style={styles.loginBtn}
+          onPress={() => navigation.replace("Home")}
         >
-          <Text style={styles.debugButtonText}>Go to Home (Debug)</Text>
+          <Text style={styles.loginText}>Go to Dashboard</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -76,61 +46,53 @@ export default function LoginSuccess() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 40,
-    paddingHorizontal: 30,
-    alignItems: 'center',
-    width: '90%',
-    maxWidth: 400,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 32,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 4 },
-  },
-  icon: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
+    shadowRadius: 6,
+    elevation: 4,
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#2E7D32',
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2e7d32",
+    marginTop: 16,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#555',
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  loader: {
     marginBottom: 20,
-    textAlign: 'center',
   },
-  loading: {
-    fontSize: 16,
-    color: '#888',
-    marginBottom: 10,
-    textAlign: 'center',
+  redirectText: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 24,
   },
-  spinner: {
-    marginTop: 10,
-  },
-  debugButton: {
-    marginTop: 20,
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+  loginBtn: {
+    backgroundColor: "#3b4cca",
     borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
   },
-  debugButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  loginText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

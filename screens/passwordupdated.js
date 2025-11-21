@@ -1,25 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-export default function PasswordUpdated() {
+export default function PasswordUpdatedScreen() {
   const navigation = useNavigation();
 
-  const handleContinue = () => {
-    navigation.replace("LoginSuccess");
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.replace("LogIn");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Ionicons name="checkmark-circle-outline" size={60} color="#3b4cca" style={styles.icon} />
-        <Text style={styles.title}>Password Updated</Text>
+        <Ionicons name="checkmark-circle" size={80} color="#2e7d32" />
+
+        <Text style={styles.title}>Password Updated!</Text>
         <Text style={styles.subtitle}>
-          Your password has been successfully updated. You are now logged in.
+          Your password has been changed successfully.
         </Text>
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>Go to Dashboard</Text>
+
+        <TouchableOpacity
+          style={styles.loginBtn}
+          onPress={() => navigation.replace("LogIn")}
+        >
+          <Text style={styles.loginText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -27,15 +36,49 @@ export default function PasswordUpdated() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", justifyContent: "center", alignItems: "center" },
-  card: {
-    width: "85%", backgroundColor: "#fff", borderRadius: 12, padding: 25,
-    shadowColor: "#000", shadowOpacity: 0.1, shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6, elevation: 5, alignItems: "center",
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
-  icon: { marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: "bold", color: "#000", marginBottom: 10 },
-  subtitle: { fontSize: 14, color: "#666", textAlign: "center", marginBottom: 20 },
-  button: { backgroundColor: "#3b4cca", borderRadius: 8, paddingVertical: 12, paddingHorizontal: 20, alignItems: "center" },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  card: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 32,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2e7d32",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  loginBtn: {
+    backgroundColor: "#3b4cca",
+    width: "100%",
+    height: 45,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loginText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });
