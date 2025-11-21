@@ -20,14 +20,14 @@ import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebaseconfig";
-import { validateEmail, validatePassword } from "../utils/authValidation";
+import { validateEmail, validatePassword } from "../../src/utils/authValidation";
 import {
   checkLoginLockout,
   incrementLoginAttempts,
   resetLoginAttempts,
   formatLockoutTime,
-} from "../utils/deviceLockout";
-import { requestOTP, checkOTPResendStatus } from "../services/otpService";
+} from "../../src/utils/deviceLockout";
+import { requestOTP, checkOTPResendStatus } from "../../src/services/otpService";
 
 const Logo = require("../assets/logo.png");
 
