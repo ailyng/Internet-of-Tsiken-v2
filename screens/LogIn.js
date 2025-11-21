@@ -34,10 +34,10 @@ const Logo = require("../assets/logo.png");
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [errors, setErrors] = useState({});
   const [deviceLocked, setDeviceLocked] = useState(false);
   const [lockoutTime, setLockoutTime] = useState(null);
@@ -107,10 +107,6 @@ export default function Login() {
       newErrors.password = passwordValidation.errors;
     }
 
-    if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required for OTP verification";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -146,19 +142,31 @@ export default function Login() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         console.log("✅ User data loaded:", userDoc.data());
-      }
+        const userData = userDoc.data();
+        const userPhone = userData.phone;
 
-      // Send OTP for verification
-      const otpResult = await requestOTP(phoneNumber);
-      if (otpResult.success) {
-        setShowOTPInput(true);
-        setCanResendOTP(false);
-        setResendCountdown(60);
-        setOTP("");
-        Alert.alert("OTP Sent", `OTP has been sent to ${phoneNumber}`);
-        resetLoginAttempts();
+        if (!userPhone) {
+          Alert.alert("Error", "Phone number not found in your account. Please contact support.");
+          setLoading(false);
+          return;
+        }
+
+        setPhoneNumber(userPhone);
+
+        // Send OTP for verification
+        const otpResult = await requestOTP(userPhone);
+        if (otpResult.success) {
+          setShowOTPInput(true);
+          setCanResendOTP(false);
+          setResendCountdown(60);
+          setOTP("");
+          Alert.alert("OTP Sent", `OTP has been sent to ${userPhone}`);
+          resetLoginAttempts();
+        } else {
+          Alert.alert("Error", otpResult.error);
+        }
       } else {
-        Alert.alert("Error", otpResult.error);
+        Alert.alert("Error", "User data not found. Please contact support.");
       }
     } catch (error) {
       console.error("Firebase Login Error:", error.code, error.message);
@@ -381,21 +389,7 @@ export default function Login() {
               </View>
             )}
 
-            {/* Phone Number Input */}
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter phone number"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              editable={!loading}
-              keyboardType="phone-pad"
-            />
-            {errors.phoneNumber && (
-              <Text style={styles.errorText}>{errors.phoneNumber}</Text>
-            )}
-
-            {/* Options Row */}
+            {/* Options Row */
             <View style={styles.optionsRow}>
               <View style={styles.checkboxContainer}>
                 <Checkbox
