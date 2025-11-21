@@ -13,6 +13,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
@@ -25,8 +26,7 @@ import {
   incrementLoginAttempts,
   resetLoginAttempts,
   formatLockoutTime,
-} from "../utils/deviceLockout";
-import { requestOTP, checkOTPResendStatus } from "../src/services/otpService";
+} from "../src/utils/deviceLockout";
 
 const Logo = require("../assets/logo.png");
 
@@ -36,14 +36,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [errors, setErrors] = useState({});
   const [deviceLocked, setDeviceLocked] = useState(false);
   const [lockoutTime, setLockoutTime] = useState(null);
-  const [showOTPInput, setShowOTPInput] = useState(false);
-  const [otp, setOTP] = useState("");
-  const [canResendOTP, setCanResendOTP] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
 
   const navigation = useNavigation();
 
@@ -67,22 +62,6 @@ export default function Login() {
     }
     return () => clearInterval(interval);
   }, [deviceLocked, lockoutTime]);
-
-  useEffect(() => {
-    let interval;
-    if (showOTPInput && resendCountdown > 0) {
-      interval = setInterval(() => {
-        setResendCountdown((prev) => {
-          if (prev <= 1) {
-            setCanResendOTP(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [showOTPInput, resendCountdown]);
 
   const checkDeviceLockoutStatus = async () => {
     const lockoutStatus = await checkLoginLockout();
@@ -114,34 +93,43 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
-    console.log("Login button pressed");
+    console.log("=== LOGIN ATTEMPT STARTED ===");
     console.log("Email:", email);
     console.log("Password length:", password?.length);
 
     if (!validateLoginForm()) {
-      console.log("Validation failed");
+      console.log("Validation failed, stopping login");
       return;
     }
 
-    console.log("Validation passed, checking lockout...");
+    console.log("Validation passed!");
 
-    const lockoutStatus = await checkLoginLockout();
-    if (lockoutStatus.isLockedOut) {
-      console.log("Account locked");
-      setDeviceLocked(true);
-      setLockoutTime(lockoutStatus.remainingTime);
-      Alert.alert(
-        "Account Locked",
-        `Too many failed login attempts. Please try again in ${formatLockoutTime(
-          lockoutStatus.remainingTime
-        )}.`
-      );
-      return;
-    }
-
-    console.log("Starting authentication...");
-    setLoading(true);
     try {
+      console.log("Checking lockout status...");
+      const lockoutStatus = await checkLoginLockout();
+      console.log("Lockout status:", lockoutStatus);
+
+      if (lockoutStatus && lockoutStatus.isLockedOut) {
+        console.log("Account is locked");
+        setDeviceLocked(true);
+        setLockoutTime(lockoutStatus.remainingTime);
+        Alert.alert(
+          "Account Locked",
+          `Too many failed login attempts. Please try again in ${formatLockoutTime(
+            lockoutStatus.remainingTime
+          )}.`
+        );
+        return;
+      }
+    } catch (lockoutError) {
+      console.log("Lockout check error (continuing anyway):", lockoutError);
+    }
+
+    console.log("Starting Firebase authentication...");
+    setLoading(true);
+
+    try {
+      console.log("Calling signInWithEmailAndPassword...");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -150,42 +138,30 @@ export default function Login() {
       const user = userCredential.user;
       console.log("✅ Login successful! User ID:", user.uid);
 
+      console.log("Fetching user document from Firestore...");
       const userDoc = await getDoc(doc(db, "users", user.uid));
+
       if (userDoc.exists()) {
         console.log("✅ User data loaded:", userDoc.data());
         const userData = userDoc.data();
-        const userPhone = userData.phone;
 
-        if (!userPhone) {
-          console.log("❌ Phone number not found");
-          Alert.alert(
-            "Error",
-            "Phone number not found in your account. Please contact support."
+        console.log("✅ Login successful, navigating to verify identity");
+        setLoading(false);
+
+        try {
+          await resetLoginAttempts();
+        } catch (resetError) {
+          console.log(
+            "Error resetting login attempts (non-critical):",
+            resetError
           );
-          setLoading(false);
-          return;
         }
 
-        console.log("Phone number found:", userPhone);
-        setPhoneNumber(userPhone);
-
-        // Send OTP for verification
-        console.log("Requesting OTP...");
-        const otpResult = await requestOTP(userPhone);
-        console.log("OTP result:", otpResult);
-
-        if (otpResult.success) {
-          setShowOTPInput(true);
-          setCanResendOTP(false);
-          setResendCountdown(60);
-          setOTP("");
-          Alert.alert("OTP Sent", `OTP has been sent to ${userPhone}`);
-          resetLoginAttempts();
-        } else {
-          Alert.alert("Error", otpResult.error || "Failed to send OTP");
-        }
+        // Navigate to VerifyIdentity screen where user can choose email or SMS
+        navigation.navigate("VerifyIdentity");
       } else {
-        console.log("❌ User data not found");
+        console.log("❌ User document does not exist in Firestore");
+        setLoading(false);
         Alert.alert("Error", "User data not found. Please contact support.");
       }
     } catch (error) {
@@ -224,17 +200,6 @@ export default function Login() {
     }
   };
 
-  const handleResendOTP = async () => {
-    setCanResendOTP(false);
-    setResendCountdown(60);
-    const result = await requestOTP(phoneNumber);
-    if (result.success) {
-      Alert.alert("Success", `OTP resent to ${phoneNumber}`);
-    } else {
-      Alert.alert("Error", result.error);
-    }
-  };
-
   const handleForgotPassword = () => {
     navigation.navigate("resetpassword");
   };
@@ -260,82 +225,6 @@ export default function Login() {
           </Text>
         </View>
       </View>
-    );
-  }
-
-  if (showOTPInput) {
-    return (
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.container}>
-            <View style={styles.card}>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowOTPInput(false);
-                  setOTP("");
-                  setErrors({});
-                }}
-                style={styles.backButton}
-              >
-                <Ionicons name="arrow-back" size={24} color="#3b4cca" />
-                <Text style={styles.backText}>Back</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.title}>Enter OTP Code</Text>
-              <Text style={styles.subtitle}>
-                We sent a 6-digit code to {phoneNumber}
-              </Text>
-
-              <TextInput
-                style={styles.otpInput}
-                placeholder="000000"
-                placeholderTextColor="#ccc"
-                value={otp}
-                onChangeText={setOTP}
-                keyboardType="number-pad"
-                maxLength={6}
-                editable={!loading}
-              />
-
-              {errors.otp && <Text style={styles.errorText}>{errors.otp}</Text>}
-
-              <TouchableOpacity
-                style={[styles.loginBtn, loading && styles.buttonDisabled]}
-                onPress={() => {
-                  navigation.navigate("VerifyIdentity", { otp, phoneNumber });
-                }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.loginText}>Verify OTP</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleResendOTP}
-                disabled={!canResendOTP}
-                style={styles.resendButton}
-              >
-                <Text
-                  style={[
-                    styles.resendText,
-                    !canResendOTP && styles.resendTextDisabled,
-                  ]}
-                >
-                  {canResendOTP
-                    ? "Resend OTP"
-                    : `Resend in ${resendCountdown}s`}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
     );
   }
 
@@ -427,21 +316,21 @@ export default function Login() {
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity
-              style={[styles.loginBtn, loading && styles.buttonDisabled]}
-              onPress={() => {
-                console.log("TouchableOpacity onPress triggered");
-                handleLogin();
-              }}
+            <Pressable
+              style={({ pressed }) => [
+                styles.loginBtn,
+                loading && styles.buttonDisabled,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.7}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.loginText}>Login</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
 
             {/* Sign Up Link */}
             <View style={styles.signupRow}>

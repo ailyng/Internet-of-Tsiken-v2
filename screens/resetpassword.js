@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { sendPasswordReset } from "../src/services/firebaseAuth";
-import { validateEmail } from "../utils/authValidation";
+import { validateEmail } from "../src/utils/authValidation";
 
 export default function ResetPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -29,22 +29,29 @@ export default function ResetPasswordScreen() {
   const handleResetRequest = async () => {
     setError("");
 
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      setError(emailValidation.error);
+    // Simple email validation
+    if (!email || email.trim() === "") {
+      setError("Email is required");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Please enter a valid email");
       return;
     }
 
     setLoading(true);
 
     try {
+      console.log("Sending password reset to:", email);
       const result = await sendPasswordReset(email);
 
       if (result.success) {
         setSubmitted(true);
         Alert.alert(
           "Email Sent",
-          "Check your email for password reset instructions"
+          "Check your email for password reset instructions. Don't forget to check your spam/junk folder!",
+          [{ text: "OK" }]
         );
       } else {
         setError(result.error || "Failed to send reset email");
@@ -123,8 +130,22 @@ export default function ResetPasswordScreen() {
                 </Text>
                 <Text style={styles.emailDisplay}>{email}</Text>
                 <Text style={styles.successMessage}>
-                  Click the link in the email to reset your password. The link
-                  will expire in 1 hour.
+                  ⚠️ IMPORTANT: The email link may not work in React Native
+                  apps.
+                  {"\n\n"}
+                  Instead, please:
+                  {"\n"}
+                  1. Open your email on a web browser
+                  {"\n"}
+                  2. Click the reset link
+                  {"\n"}
+                  3. You'll be redirected to Firebase's password reset page
+                  {"\n"}
+                  4. Enter your new password there
+                  {"\n\n"}
+                  📧 Check spam/junk folder if you don't see the email.
+                  {"\n\n"}
+                  Or contact support for assistance.
                 </Text>
                 <TouchableOpacity
                   style={styles.loginBtn}

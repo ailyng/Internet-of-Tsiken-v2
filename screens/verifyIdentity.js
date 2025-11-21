@@ -7,17 +7,19 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { auth, db } from '../config/firebaseconfig';
-import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from "../config/firebaseconfig";
+import { doc, updateDoc } from "firebase/firestore";
 
 export default function VerifyIdentityScreen() {
   const [selectedOption, setSelectedOption] = useState("email");
   const [inputValue, setInputValue] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState("");
   const inputs = useRef([]);
   const navigation = useNavigation();
 
@@ -26,6 +28,22 @@ export default function VerifyIdentityScreen() {
       alert("Mobile number must be exactly 11 digits.");
       return;
     }
+
+    // Generate a 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(otpCode);
+
+    // For testing: Show OTP in alert and console
+    console.log("==========================================");
+    console.log(`📱 OTP CODE: ${otpCode}`);
+    console.log("==========================================");
+
+    Alert.alert(
+      "OTP Sent",
+      `Your OTP code is: ${otpCode}\n\n(In production, this will be sent to your ${selectedOption === "email" ? "email" : "mobile number"})`,
+      [{ text: "OK" }]
+    );
+
     setShowOtpScreen(true);
   };
 
@@ -47,6 +65,14 @@ export default function VerifyIdentityScreen() {
   };
 
   const handleVerifyLogin = async () => {
+    const enteredOtp = otp.join("");
+
+    // Verify OTP
+    if (enteredOtp !== generatedOtp) {
+      Alert.alert("Error", "Invalid OTP code. Please try again.");
+      return;
+    }
+
     try {
       const user = auth.currentUser;
       if (user) {
@@ -66,6 +92,27 @@ export default function VerifyIdentityScreen() {
 
   const handleBack = () => {
     setShowOtpScreen(false);
+    setOtp(["", "", "", "", "", ""]);
+  };
+
+  const handleResendOTP = () => {
+    // Generate a new 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(otpCode);
+
+    // Clear existing OTP input
+    setOtp(["", "", "", "", "", ""]);
+
+    // For testing: Show OTP in alert and console
+    console.log("==========================================");
+    console.log(`📱 NEW OTP CODE: ${otpCode}`);
+    console.log("==========================================");
+
+    Alert.alert(
+      "OTP Resent",
+      `Your new OTP code is: ${otpCode}\n\n(In production, this will be sent to your ${selectedOption === "email" ? "email" : "mobile number"})`,
+      [{ text: "OK" }]
+    );
   };
 
   const handleOutsideTap = () => {
@@ -81,7 +128,8 @@ export default function VerifyIdentityScreen() {
             <>
               <Text style={styles.title}>Enter OTP CODE</Text>
               <Text style={styles.subtitle}>
-                We sent a 6-digit code to your {selectedOption === "email" ? "email" : "mobile number"}
+                We sent a 6-digit code to your{" "}
+                {selectedOption === "email" ? "email" : "mobile number"}
               </Text>
 
               <View style={styles.otpContainer}>
@@ -104,13 +152,16 @@ export default function VerifyIdentityScreen() {
               </View>
 
               <View style={styles.resendRow}>
-                <Text style={styles.resendText}>Didn’t receive the code? </Text>
-                <TouchableOpacity>
+                <Text style={styles.resendText}>Didn't receive the code? </Text>
+                <TouchableOpacity onPress={handleResendOTP}>
                   <Text style={styles.resendLink}>Resend</Text>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyLogin}>
+              <TouchableOpacity
+                style={styles.verifyButton}
+                onPress={handleVerifyLogin}
+              >
                 <Text style={styles.verifyText}>Verify & Login</Text>
               </TouchableOpacity>
 
@@ -319,7 +370,6 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 12,
     alignItems: "center",
-
   },
   backText: {
     fontSize: 16,

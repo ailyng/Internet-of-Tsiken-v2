@@ -102,25 +102,26 @@ export const signInUser = async (email, password) => {
  */
 export const sendPasswordReset = async (email) => {
   try {
-    // Check if user exists in Firestore
-    const userDoc = await getDoc(doc(db, "users", email.toLowerCase()));
+    console.log("Attempting to send password reset email to:", email);
 
-    if (!userDoc.exists()) {
-      // For security, we don't reveal if email exists or not
-      return { success: true, error: null };
-    }
-
+    // Send password reset email directly
+    // Firebase will handle if user exists or not
     await sendPasswordResetEmail(auth, email);
+
+    console.log("✅ Password reset email sent successfully");
     return { success: true, error: null };
   } catch (error) {
-    console.error("Password reset error:", error);
+    console.error("Password reset error:", error.code, error.message);
     let errorMessage = "Failed to send password reset email";
 
     if (error.code === "auth/invalid-email") {
       errorMessage = "Invalid email address";
     } else if (error.code === "auth/user-not-found") {
-      // For security, don't reveal if user exists
+      // For security, we don't reveal if user exists
+      console.log("User not found, but returning success for security");
       return { success: true, error: null };
+    } else if (error.code === "auth/missing-email") {
+      errorMessage = "Email is required";
     }
 
     return { success: false, error: errorMessage };
