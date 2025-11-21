@@ -20,7 +20,6 @@ import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebaseconfig";
-import { validateEmail } from "../src/utils/authValidation";
 import {
   checkLoginLockout,
   incrementLoginAttempts,
@@ -97,27 +96,38 @@ export default function Login() {
     setErrors({});
     const newErrors = {};
 
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      newErrors.email = emailValidation.error;
+    // Basic email validation - just check if it's not empty and has @
+    if (!email || email.trim() === "") {
+      newErrors.email = "Email is required";
+    } else if (!email.includes("@")) {
+      newErrors.email = "Please enter a valid email";
     }
 
-    // For login, just check if password is provided
+    // Just check if password is provided
     if (!password || password.trim() === "") {
       newErrors.password = "Password is required";
     }
 
+    console.log("Validation errors:", newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleLogin = async () => {
+    console.log("Login button pressed");
+    console.log("Email:", email);
+    console.log("Password length:", password?.length);
+
     if (!validateLoginForm()) {
+      console.log("Validation failed");
       return;
     }
 
+    console.log("Validation passed, checking lockout...");
+
     const lockoutStatus = await checkLoginLockout();
     if (lockoutStatus.isLockedOut) {
+      console.log("Account locked");
       setDeviceLocked(true);
       setLockoutTime(lockoutStatus.remainingTime);
       Alert.alert(
@@ -129,6 +139,7 @@ export default function Login() {
       return;
     }
 
+    console.log("Starting authentication...");
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -146,6 +157,7 @@ export default function Login() {
         const userPhone = userData.phone;
 
         if (!userPhone) {
+          console.log("❌ Phone number not found");
           Alert.alert(
             "Error",
             "Phone number not found in your account. Please contact support."
@@ -154,10 +166,14 @@ export default function Login() {
           return;
         }
 
+        console.log("Phone number found:", userPhone);
         setPhoneNumber(userPhone);
 
         // Send OTP for verification
+        console.log("Requesting OTP...");
         const otpResult = await requestOTP(userPhone);
+        console.log("OTP result:", otpResult);
+
         if (otpResult.success) {
           setShowOTPInput(true);
           setCanResendOTP(false);
@@ -166,9 +182,10 @@ export default function Login() {
           Alert.alert("OTP Sent", `OTP has been sent to ${userPhone}`);
           resetLoginAttempts();
         } else {
-          Alert.alert("Error", otpResult.error);
+          Alert.alert("Error", otpResult.error || "Failed to send OTP");
         }
       } else {
+        console.log("❌ User data not found");
         Alert.alert("Error", "User data not found. Please contact support.");
       }
     } catch (error) {
@@ -412,8 +429,12 @@ export default function Login() {
             {/* Login Button */}
             <TouchableOpacity
               style={[styles.loginBtn, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
+              onPress={() => {
+                console.log("TouchableOpacity onPress triggered");
+                handleLogin();
+              }}
               disabled={loading}
+              activeOpacity={0.7}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
