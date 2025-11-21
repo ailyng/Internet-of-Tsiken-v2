@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { sendPasswordReset } from "../services/firebaseAuth";
-import { validateEmail } from "../utils/authValidation";
+import { sendPasswordReset } from "../src/services/firebaseAuth";
+import { validateEmail } from "../src/utils/authValidation";
 
 export default function ResetPasswordScreen() {
   const [email, setEmail] = useState("");
