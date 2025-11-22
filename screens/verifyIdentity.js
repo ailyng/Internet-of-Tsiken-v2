@@ -13,6 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../config/firebaseconfig";
 import { doc, updateDoc } from "firebase/firestore";
+import firestore from "@react-native-firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
 
 export default function VerifyIdentityScreen() {
   const [selectedOption, setSelectedOption] = useState("email");
@@ -25,7 +27,7 @@ export default function VerifyIdentityScreen() {
 
   const handleSendOTP = () => {
     if (selectedOption === "mobile" && inputValue.length !== 11) {
-      alert("Mobile number must be exactly 11 digits.");
+      alert("Mobile number must be 10 digits.");
       return;
     }
 

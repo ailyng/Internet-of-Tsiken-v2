@@ -5,7 +5,9 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const LOCKOUT_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+//const LOCKOUT_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds (production)
+//const LOCKOUT_DURATION = 60 * 1000; // 1 minute in milliseconds
+export const LOCKOUT_DURATION = 10 * 1000; // 10 seconds in milliseconds (testing)
 const LOGIN_ATTEMPT_LIMIT = 5;
 const OTP_ATTEMPT_LIMIT = 5;
 

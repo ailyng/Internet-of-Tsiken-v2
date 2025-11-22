@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import Header from "./Components/Header";
 import QuickSetupModal from "./Components/QuickSetupModal";
+import { auth, db } from "../../config/firebaseconfig";
+import { doc, getDoc } from "firebase/firestore";
 
 // Replace static import with a dynamic require + in-memory fallback.
 // This avoids a crash when @react-native-async-storage/async-storage is not installed.
@@ -71,10 +73,12 @@ export default function QuickOverviewSetup() {
   const [daysCount, setDaysCount] = useState("");
   const [todayDate, setTodayDate] = useState("");
   const [showQuickSetup, setShowQuickSetup] = useState(false);
+  const [userName, setUserName] = useState("User");
 
   // Load saved data when component mounts
   useEffect(() => {
     loadSavedData();
+    loadUserData();
 
     // Set today's date
     const today = new Date();
@@ -102,6 +106,58 @@ export default function QuickOverviewSetup() {
       }
     } catch (error) {
       console.error("Error loading saved data:", error);
+    }
+  };
+
+  const loadUserData = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("User data from Firestore:", userData);
+          let fullName = "User";
+
+          if (userData.fullname) {
+            fullName = userData.fullname;
+          } else if (userData.fullName) {
+            fullName = userData.fullName;
+          } else if (userData.full_name) {
+            fullName = userData.full_name;
+          } else if (userData.FullName) {
+            fullName = userData.FullName;
+          } else if (userData.displayName) {
+            fullName = userData.displayName;
+          } else if (userData.firstName && userData.lastName) {
+            fullName = userData.firstName + " " + userData.lastName;
+          } else if (userData.first_name && userData.last_name) {
+            fullName = userData.first_name + " " + userData.last_name;
+          } else if (userData.firstName) {
+            fullName = userData.firstName;
+          } else if (userData.first_name) {
+            fullName = userData.first_name;
+          } else if (userData.name) {
+            fullName = userData.name;
+          } else if (user.displayName) {
+            // Use Firebase Auth display name if available
+            fullName = user.displayName;
+          }
+
+          console.log("Setting username to:", fullName);
+          setUserName(fullName);
+        } else {
+          console.log("User document does not exist");
+          // Fallback to Firebase Auth display name only
+          if (user.displayName) {
+            setUserName(user.displayName);
+          }
+        }
+      } else {
+        console.log("No authenticated user found");
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
     }
   };
 
@@ -160,7 +216,7 @@ export default function QuickOverviewSetup() {
         <View style={styles.container}>
           {/* Welcome Section */}
           <View style={styles.welcomeSection}>
-            <Text style={styles.greeting}>Hello, Adrian! 👋</Text>
+            <Text style={styles.greeting}>Hello, {userName}! 👋</Text>
             <Text style={styles.date}>{todayDate}</Text>
           </View>
 
@@ -340,6 +396,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#f8fafc",
     padding: 16,
+    paddingTop: 60,
   },
   welcomeSection: {
     marginBottom: 20,
