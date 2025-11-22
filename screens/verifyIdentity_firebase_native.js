@@ -13,10 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../config/firebaseconfig";
 import { doc, updateDoc } from "firebase/firestore";
-import { getFunctions, httpsCallable } from "firebase/functions";
-
-// Initialize Firebase Functions
-const functions = getFunctions(undefined, "us-central1");
+import {
+  multiFactor,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+  RecaptchaVerifier,
+} from "firebase/auth";
 
 export default function VerifyIdentityScreen() {
   const [selectedOption, setSelectedOption] = useState("mobile");
@@ -25,74 +27,78 @@ export default function VerifyIdentityScreen() {
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [verificationId, setVerificationId] = useState(null);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
   const inputs = useRef([]);
   const navigation = useNavigation();
 
-  // Send OTP using Firebase Functions (working version)
+  // Note: reCAPTCHA not needed for React Native - Firebase handles it internally
+
+  // Send SMS using Firebase MFA
   const handleSendOTP = async () => {
     if (selectedOption === "mobile") {
       if (inputValue.length < 10) {
         Alert.alert("Error", "Enter the 10-digit mobile number");
         return;
       }
+
       try {
+        const user = auth.currentUser;
+        if (!user) {
+          Alert.alert("Error", "User not authenticated");
+          return;
+        }
+
         // Format phone number with country code
-        const phoneNumber = `+63${inputValue}`; // Philippines country code
+        const phoneNumber = `+63${inputValue}`;
+        console.log("🔄 Starting Firebase MFA SMS for:", phoneNumber);
 
-        console.log("🔄 Sending SMS via Firebase Functions:", phoneNumber);
+        // Create phone auth credential for MFA
+        const phoneInfoOptions = {
+          phoneNumber: phoneNumber,
+          session: await multiFactor(user).getSession(),
+        };
 
-        // Call our deployed Firebase Function to send SMS
-        const sendSMSOTP = httpsCallable(functions, "sendSMSOTP");
-        const requestData = { phone: phoneNumber };
-        console.log("🔄 Request data being sent:", requestData);
-        console.log("🔄 Request data type:", typeof requestData);
-        console.log("🔄 Request data keys:", Object.keys(requestData));
+        const phoneAuthProvider = new PhoneAuthProvider(auth);
+        const verificationId =
+          await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions);
 
-        const response = await sendSMSOTP(requestData);
+        console.log("✅ SMS sent via Firebase MFA!");
+        console.log("Verification ID:", verificationId);
 
-        if (response.data && response.data.success) {
-          setConfirmationResult({
-            phone: response.data.phone,
-            testOTP: response.data.testOTP, // This shows it's working
-          });
-          setVerificationId(response.data.phone);
-        } else {
-          throw new Error("Failed to send SMS");
-        }
-
-        console.log("==========================================");
-        console.log(
-          `📱 SMS sent via Firebase Functions to: ${response.data.phone}`
-        );
-        console.log("✅ Firebase Functions SMS successful");
-        if (response.data.testOTP) {
-          console.log(`🔐 OTP CODE: ${response.data.testOTP}`);
-        }
-        console.log("==========================================");
-
+        setVerificationId(verificationId);
+        setConfirmationResult({ phoneNumber });
         setShowOtpScreen(true);
+
         Alert.alert(
-          "SMS Sent",
-          `SMS verification code sent to ${response.data.phone}${response.data.testOTP ? `\\n\\n🔐 TEST OTP: ${response.data.testOTP}\\n\\nUse this code to continue (SMS delivery in progress...)` : "\\n\\nCheck your messages for the code."}`
+          "SMS Sent!",
+          `📱 Verification code sent to ${phoneNumber}\n\nCheck your messages for the 6-digit code.`
         );
       } catch (error) {
-        console.error("🚨 OTP Generation Error:", error);
-        console.error("Error details:", {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          stack: error.stack,
-        });
+        console.error("🚨 Firebase MFA SMS Error:", error);
 
-        let errorMessage = "Failed to send OTP";
-        if (error.code) {
-          errorMessage += ` (${error.code})`;
-        }
-        if (error.message) {
-          errorMessage += `: ${error.message}`;
+        let errorMessage = "Failed to send SMS verification code";
+
+        // Handle specific Firebase Auth errors
+        switch (error.code) {
+          case "auth/invalid-phone-number":
+            errorMessage = "Invalid phone number format";
+            break;
+          case "auth/too-many-requests":
+            errorMessage = "Too many SMS requests. Please try again later";
+            break;
+          case "auth/captcha-check-failed":
+            errorMessage = "reCAPTCHA verification failed. Please try again";
+            break;
+          case "auth/quota-exceeded":
+            errorMessage = "SMS quota exceeded. Please try again tomorrow";
+            break;
+          default:
+            if (error.message) {
+              errorMessage = error.message;
+            }
         }
 
-        Alert.alert("Error", errorMessage);
+        Alert.alert("SMS Error", errorMessage);
       }
     } else {
       Alert.alert("Error", "Only mobile OTP is supported.");
@@ -117,52 +123,103 @@ export default function VerifyIdentityScreen() {
     }
   };
 
-  // Verify OTP using Firebase Functions
+  // Verify OTP using Firebase MFA
   const handleVerifyLogin = async () => {
     const enteredOtp = otp.join("");
-    if (!confirmationResult) {
-      Alert.alert("Error", "No OTP request found.");
+
+    if (!verificationId || !confirmationResult) {
+      Alert.alert(
+        "Error",
+        "No verification session found. Please request a new code."
+      );
+      return;
+    }
+
+    if (enteredOtp.length !== 6) {
+      Alert.alert(
+        "Error",
+        "Please enter the complete 6-digit verification code."
+      );
       return;
     }
 
     try {
-      // Verify OTP using Firebase Functions
-      const verifySMSOTP = httpsCallable(functions, "verifySMSOTP");
-      const response = await verifySMSOTP({
-        phone: confirmationResult.phone,
-        otp: enteredOtp,
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert("Error", "User session expired. Please login again.");
+        return;
+      }
+
+      console.log("🔄 Verifying OTP with Firebase MFA...");
+
+      // Create phone auth credential from verification code
+      const phoneAuthCredential = PhoneAuthProvider.credential(
+        verificationId,
+        enteredOtp
+      );
+
+      // Create multi-factor assertion
+      const multiFactorAssertion =
+        PhoneMultiFactorGenerator.assertion(phoneAuthCredential);
+
+      // Enroll the second factor
+      await multiFactor(user).enroll(multiFactorAssertion, "Phone Number");
+
+      console.log("✅ Phone number enrolled as second factor!");
+
+      // Update Firestore with verification status
+      await updateDoc(doc(db, "users", user.uid), {
+        verified: true,
+        lastVerified: new Date(),
+        phone: confirmationResult.phoneNumber,
+        phoneVerified: true,
+        mfaEnabled: true,
+        mfaEnrollmentDate: new Date(),
       });
 
-      if (response.data && response.data.success) {
-        console.log("✅ Phone number verified successfully!");
-        console.log("Phone:", response.data.phone);
+      console.log("✅ User verification status updated");
 
-        // Update Firestore verification status
-        const user = auth.currentUser;
-        if (user) {
-          await updateDoc(doc(db, "users", user.uid), {
-            verified: true,
-            lastVerified: new Date(),
-            phone: response.data.phone,
-            phoneVerified: true,
-          });
-          console.log("✅ User verification status updated");
-        }
-
-        Alert.alert(
-          "Success", 
-          "Phone number verified successfully!\\n\\n🎉 SMS verification completed via Firebase Functions."
-        );
-        navigation.navigate("LoginSuccess");
-      } else {
-        Alert.alert("Error", "Invalid OTP code. Please try again.");
-      }
-    } catch (error) {
-      console.error("OTP Verification Error:", error);
       Alert.alert(
-        "Error",
-        error.message || "Failed to verify OTP. Please try again."
+        "Success!",
+        "Phone number verified and enrolled as second factor authentication.",
+        [
+          {
+            text: "Continue",
+            onPress: () => navigation.navigate("LoginSuccess"),
+          },
+        ]
       );
+    } catch (error) {
+      console.error("🚨 Firebase MFA Verification Error:", error);
+
+      let errorMessage = "Failed to verify the code";
+
+      // Handle specific Firebase Auth errors
+      switch (error.code) {
+        case "auth/invalid-verification-code":
+          errorMessage =
+            "Invalid verification code. Please check and try again.";
+          break;
+        case "auth/code-expired":
+          errorMessage =
+            "Verification code has expired. Please request a new one.";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Too many failed attempts. Please try again later.";
+          break;
+        case "auth/second-factor-already-enrolled":
+          errorMessage =
+            "This phone number is already enrolled. Verification successful!";
+          // Still navigate to success since it's technically verified
+          navigation.navigate("LoginSuccess");
+          return;
+        default:
+          if (error.message) {
+            errorMessage = error.message;
+          }
+      }
+
+      Alert.alert("Verification Failed", errorMessage);
     }
   };
 

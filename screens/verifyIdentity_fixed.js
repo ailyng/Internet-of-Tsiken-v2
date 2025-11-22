@@ -43,12 +43,7 @@ export default function VerifyIdentityScreen() {
 
         // Call our deployed Firebase Function to send SMS
         const sendSMSOTP = httpsCallable(functions, "sendSMSOTP");
-        const requestData = { phone: phoneNumber };
-        console.log("🔄 Request data being sent:", requestData);
-        console.log("🔄 Request data type:", typeof requestData);
-        console.log("🔄 Request data keys:", Object.keys(requestData));
-
-        const response = await sendSMSOTP(requestData);
+        const response = await sendSMSOTP({ phone: phoneNumber });
 
         if (response.data && response.data.success) {
           setConfirmationResult({
@@ -73,7 +68,7 @@ export default function VerifyIdentityScreen() {
         setShowOtpScreen(true);
         Alert.alert(
           "SMS Sent",
-          `SMS verification code sent to ${response.data.phone}${response.data.testOTP ? `\\n\\n🔐 TEST OTP: ${response.data.testOTP}\\n\\nUse this code to continue (SMS delivery in progress...)` : "\\n\\nCheck your messages for the code."}`
+          `SMS verification code sent to ${response.data.phone}${response.data.testOTP ? `\\n\\nDemo OTP: ${response.data.testOTP}` : "\\n\\nCheck your messages for the code."}`
         );
       } catch (error) {
         console.error("🚨 OTP Generation Error:", error);
@@ -144,15 +139,11 @@ export default function VerifyIdentityScreen() {
             verified: true,
             lastVerified: new Date(),
             phone: response.data.phone,
-            phoneVerified: true,
           });
           console.log("✅ User verification status updated");
         }
 
-        Alert.alert(
-          "Success", 
-          "Phone number verified successfully!\\n\\n🎉 SMS verification completed via Firebase Functions."
-        );
+        Alert.alert("Success", "Phone number verified successfully!");
         navigation.navigate("LoginSuccess");
       } else {
         Alert.alert("Error", "Invalid OTP code. Please try again.");
@@ -279,7 +270,7 @@ export default function VerifyIdentityScreen() {
   );
 }
 
-// Keep existing styles...
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -2,7 +2,9 @@
   "expo": {
     "name": "Internet Of Tsiken",
     "slug": "capstone",
-    "plugins": ["@react-native-firebase/app", "@react-native-firebase/auth"],
+    "plugins": [
+      "expo-video"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -28,9 +30,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-video"
-    ],
     "extra": {
       "eas": {
         "projectId": "84f969ee-7b4d-47d6-8494-5d9a87e161fb"

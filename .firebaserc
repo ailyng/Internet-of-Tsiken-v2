@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "internet-of-tsiken-690dd"
-  }
+    "default": "internet-of-tsiken-690dd",
+    "otp": "internet-of-tsiken-690dd"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -150,7 +150,7 @@ export default function VerifyIdentityScreen() {
         }
 
         Alert.alert(
-          "Success", 
+          "Success",
           "Phone number verified successfully!\\n\\n🎉 SMS verification completed via Firebase Functions."
         );
         navigation.navigate("LoginSuccess");
