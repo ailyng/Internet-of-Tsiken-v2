@@ -76,7 +76,11 @@ export default function ResetPasswordScreen() {
         >
           <View style={styles.card}>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+                setEmail("");
+                setError("");
+                navigation.goBack();
+              }}
               style={styles.backButton}
             >
               <Ionicons name="arrow-back" size={24} color="#3b4cca" />
@@ -115,7 +119,13 @@ export default function ResetPasswordScreen() {
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEmail("");
+                    setError("");
+                    navigation.goBack();
+                  }}
+                >
                   <Text style={styles.signupLink}>Back to Login</Text>
                 </TouchableOpacity>
               </>

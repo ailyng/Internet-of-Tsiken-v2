@@ -17,7 +17,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebaseconfig";
@@ -26,6 +27,7 @@ import {
   incrementLoginAttempts,
   resetLoginAttempts,
   formatLockoutTime,
+  LOCKOUT_DURATION,
 } from "../src/utils/deviceLockout";
 
 const Logo = require("../assets/logo.png");
@@ -44,7 +46,34 @@ export default function Login() {
 
   useEffect(() => {
     checkDeviceLockoutStatus();
+    // Temporary: Clear old lockout data for testing
+    clearOldLockoutData();
   }, []);
+
+  const clearOldLockoutData = async () => {
+    try {
+      await AsyncStorage.removeItem("device_login_lockout");
+      await AsyncStorage.removeItem("device_login_attempts");
+      console.log("Cleared old lockout data");
+    } catch (error) {
+      console.error("Error clearing lockout data:", error);
+    }
+  };
+
+  // Clear email and password fields when returning from password reset
+  useFocusEffect(
+    React.useCallback(() => {
+      // Check if we're returning from reset password screen
+      const state = navigation.getState();
+      const previousRoute = state.routes[state.index - 1];
+
+      if (previousRoute && previousRoute.name === "resetpassword") {
+        setEmail("");
+        setPassword("");
+        setErrors({});
+      }
+    }, [navigation])
+  );
 
   useEffect(() => {
     let interval;
@@ -147,7 +176,7 @@ export default function Login() {
 
         if (userData.mustShowPasswordUpdated) {
           await updateDoc(userRef, { mustShowPasswordUpdated: false });
-          navigation.replace("passwordupdated");
+          navigation.replace("PasswordUpdated");
           return;
         }
 
@@ -189,10 +218,10 @@ export default function Login() {
 
       if (remainingAttempts <= 0) {
         setDeviceLocked(true);
-        setLockoutTime(60 * 60 * 1000);
+        setLockoutTime(LOCKOUT_DURATION);
         Alert.alert(
           "Account Locked",
-          "Too many failed login attempts. Your account is locked for 1 hour."
+          "Too many failed login attempts. Your account is locked for 10 seconds."
         );
       }
 

@@ -1,3 +1,4 @@
+import"react-native-gesture-handler;
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -8,14 +9,13 @@ import LogIn from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import LoginSuccess from "./screens/loginSuccess";
 import VerifyIdentity from "./screens/verifyIdentity";
-import PasswordUpdated from "./screens/passwordupdated";
+import PasswordUpdated from "./src/screens/passwordupdated";
 import ResetPassword from "./screens/resetpassword";
 import ConfirmPassword from "./screens/ConfirmPassword";
 import Home from "./screens/Dashboard/Home";
 
 const Stack = createNativeStackNavigator();
 
-// ✅ Linking config for deep links
 const linking = {
   prefixes: [
     "internet-of-tsiken://",
