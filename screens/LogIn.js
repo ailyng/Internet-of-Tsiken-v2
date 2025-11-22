@@ -19,7 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
 import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebaseconfig";
 import {
   checkLoginLockout,
@@ -132,20 +132,26 @@ export default function Login() {
       console.log("Calling signInWithEmailAndPassword...");
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
       const user = userCredential.user;
       console.log("✅ Login successful! User ID:", user.uid);
 
-      console.log("Fetching user document from Firestore...");
-      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
         console.log("✅ User data loaded:", userDoc.data());
         const userData = userDoc.data();
 
-        console.log("✅ Login successful, navigating to verify identity");
+        if (userData.mustShowPasswordUpdated) {
+          await updateDoc(userRef, { mustShowPasswordUpdated: false });
+          navigation.replace("passwordupdated");
+          return;
+        }
+
+        console.log("✅ Login successful");
         setLoading(false);
 
         try {
@@ -157,6 +163,7 @@ export default function Login() {
           );
         }
 
+        console.log("✅ Normal login, navigating to verify identity");
         // Navigate to VerifyIdentity screen where user can choose email or SMS
         navigation.navigate("VerifyIdentity");
       } else {
@@ -180,12 +187,7 @@ export default function Login() {
         errorMessage = "User not found.";
       }
 
-      if (remainingAttempts > 0) {
-        Alert.alert(
-          "Login Failed",
-          `${errorMessage}\n${remainingAttempts} attempt(s) remaining.`
-        );
-      } else {
+      if (remainingAttempts <= 0) {
         setDeviceLocked(true);
         setLockoutTime(60 * 60 * 1000);
         Alert.alert(
