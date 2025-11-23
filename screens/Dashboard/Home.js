@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import Header from "./Components/Header";
 import QuickSetupModal from "./Components/QuickSetupModal";
-import { auth, db } from "../../config/firebaseconfig";
+import { auth, db } from "../../firebaseconfig.js";
 import { doc, getDoc } from "firebase/firestore";
 
 // Replace static import with a dynamic require + in-memory fallback.

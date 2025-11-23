@@ -21,7 +21,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../config/firebaseconfig";
+import { auth, db } from "../firebaseconfig.js";
 import {
   checkLoginLockout,
   incrementLoginAttempts,
@@ -192,9 +192,11 @@ export default function Login() {
           );
         }
 
-        console.log("✅ Normal login, navigating to verify identity");
-        // Navigate to VerifyIdentity screen where user can choose email or SMS
-        navigation.navigate("VerifyIdentity");
+        console.log(
+          "✅ Login successful, navigating to mobile number verification"
+        );
+        // Navigate to MobileNumberInput screen for mobile verification
+        navigation.navigate("MobileNumberInput");
       } else {
         console.log("❌ User document does not exist in Firestore");
         setLoading(false);

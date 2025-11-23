@@ -9,6 +9,8 @@ import LogIn from "./screens/LogIn";
 import SignUp from "./screens/SignUp";
 import LoginSuccess from "./screens/loginSuccess";
 import VerifyIdentity from "./screens/verifyIdentity";
+import MobileNumberInput from "./screens/MobileNumberInput";
+import OTPVerification from "./screens/OTPVerification";
 import PasswordUpdated from "./src/screens/passwordupdated";
 import ResetPassword from "./screens/resetpassword";
 import ConfirmPassword from "./screens/ConfirmPassword";
@@ -28,6 +30,8 @@ const linking = {
       SignUp: "signup",
       LoginSuccess: "loginSuccess",
       VerifyIdentity: "verifyIdentity",
+      MobileNumberInput: "mobile-number",
+      OTPVerification: "otp-verification",
       PasswordUpdated: "passwordupdated",
       resetpassword: "resetpassword",
       ConfirmPassword: "resetpassword", // ✅ routes reset link into ConfirmPassword
@@ -48,6 +52,8 @@ export default function App() {
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="LoginSuccess" component={LoginSuccess} />
         <Stack.Screen name="VerifyIdentity" component={VerifyIdentity} />
+        <Stack.Screen name="MobileNumberInput" component={MobileNumberInput} />
+        <Stack.Screen name="OTPVerification" component={OTPVerification} />
         <Stack.Screen name="PasswordUpdated" component={PasswordUpdated} />
         <Stack.Screen name="resetpassword" component={ResetPassword} />
         <Stack.Screen name="ConfirmPassword" component={ConfirmPassword} />

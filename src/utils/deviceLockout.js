@@ -5,11 +5,24 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-//const LOCKOUT_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds (production)
-//const LOCKOUT_DURATION = 60 * 1000; // 1 minute in milliseconds
-export const LOCKOUT_DURATION = 10 * 1000; // 10 seconds in milliseconds (testing)
+// Environment detection - set to true for production
+const IS_PRODUCTION = false; // Change to true for production builds
+
+// Lockout durations
+export const LOGIN_LOCKOUT_DURATION = IS_PRODUCTION
+  ? 60 * 60 * 1000 // 1 hour in production
+  : 60 * 1000; // 1 minute in development
+
+export const OTP_LOCKOUT_DURATION = IS_PRODUCTION
+  ? 60 * 60 * 1000 // 1 hour in production
+  : 60 * 1000; // 1 minute in development
+
+// Attempt limits
 const LOGIN_ATTEMPT_LIMIT = 5;
 const OTP_ATTEMPT_LIMIT = 5;
+
+// Legacy export for backward compatibility
+export const LOCKOUT_DURATION = LOGIN_LOCKOUT_DURATION;
 
 const LOCKOUT_KEYS = {
   LOGIN: "device_login_lockout",
@@ -134,11 +147,16 @@ export const incrementOTPAttempts = async () => {
  */
 export const lockoutLoginOnDevice = async () => {
   try {
-    const lockoutTime = Date.now() + LOCKOUT_DURATION;
+    const lockoutTime = Date.now() + LOGIN_LOCKOUT_DURATION;
     await AsyncStorage.setItem(
       LOCKOUT_KEYS.LOGIN,
-      JSON.stringify({ lockoutTime })
+      JSON.stringify({
+        lockoutTime,
+        reason: "login_attempts",
+        timestamp: Date.now(),
+      })
     );
+    console.log(`🔒 Login locked for ${IS_PRODUCTION ? "1 hour" : "1 minute"}`);
   } catch (error) {
     console.error("Error locking out login:", error);
   }
@@ -150,11 +168,16 @@ export const lockoutLoginOnDevice = async () => {
  */
 export const lockoutOTPOnDevice = async () => {
   try {
-    const lockoutTime = Date.now() + LOCKOUT_DURATION;
+    const lockoutTime = Date.now() + OTP_LOCKOUT_DURATION;
     await AsyncStorage.setItem(
       LOCKOUT_KEYS.OTP,
-      JSON.stringify({ lockoutTime })
+      JSON.stringify({
+        lockoutTime,
+        reason: "otp_attempts",
+        timestamp: Date.now(),
+      })
     );
+    console.log(`🔒 OTP locked for ${IS_PRODUCTION ? "1 hour" : "1 minute"}`);
   } catch (error) {
     console.error("Error locking out OTP:", error);
   }
@@ -187,11 +210,49 @@ export const resetOTPAttempts = async () => {
 /**
  * Format remaining lockout time
  * @param {number} milliseconds - Remaining time in milliseconds
- * @returns {string} - Formatted time (MM:SS)
+ * @returns {string} - Formatted time (MM:SS or HH:MM:SS)
  */
 export const formatLockoutTime = (milliseconds) => {
   const totalSeconds = Math.ceil(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+};
+
+/**
+ * Get current environment info
+ * @returns {object} - Environment information
+ */
+export const getEnvironmentInfo = () => {
+  return {
+    isProduction: IS_PRODUCTION,
+    loginLockoutDuration: LOGIN_LOCKOUT_DURATION,
+    otpLockoutDuration: OTP_LOCKOUT_DURATION,
+    loginAttemptLimit: LOGIN_ATTEMPT_LIMIT,
+    otpAttemptLimit: OTP_ATTEMPT_LIMIT,
+  };
+};
+
+/**
+ * Clear all lockout data (for testing/debugging)
+ * @returns {Promise<void>}
+ */
+export const clearAllLockoutData = async () => {
+  try {
+    await AsyncStorage.multiRemove([
+      LOCKOUT_KEYS.LOGIN,
+      LOCKOUT_KEYS.OTP,
+      LOCKOUT_KEYS.LOGIN_ATTEMPTS,
+      LOCKOUT_KEYS.OTP_ATTEMPTS,
+    ]);
+    console.log("✅ All lockout data cleared");
+  } catch (error) {
+    console.error("Error clearing lockout data:", error);
+  }
 };

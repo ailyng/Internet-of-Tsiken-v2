@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { auth, db } from "../config/firebaseconfig";
+import { auth, db } from "../firebaseconfig.js";
 import { doc, updateDoc } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
@@ -150,7 +150,7 @@ export default function VerifyIdentityScreen() {
         }
 
         Alert.alert(
-          "Success", 
+          "Success",
           "Phone number verified successfully!\\n\\n🎉 SMS verification completed via Firebase Functions."
         );
         navigation.navigate("LoginSuccess");
